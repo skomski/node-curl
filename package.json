@@ -1,0 +1,24 @@
+{
+  "author": "Karl Skomski <karl@skomski.com> (http://skomski.com)",
+  "name": "curl",
+  "description": "node.js bindings for libcurl",
+  "version": "0.0.1",
+  "keywords": ["curl", "download", "upload"],
+  "repository": {
+    "url": "git://github.com/Skomski/node-curl.git"
+  },
+  "main": "lib/curl",
+  "scripts": {
+    "test": "make test"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "urun": "0.0.6",
+    "utest": "0.0.5"
+  },
+  "optionalDependencies": {},
+  "engines": {
+    "node":">=0.6.12"
+  }
+}

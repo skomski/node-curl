@@ -1,0 +1,50 @@
+# project noname (1.0) configured on Thu Apr  5 01:46:45 2012 by
+# waf 1.5.16 (abi 7, python 20702f0 on linux2)
+# using /home/skomski/.nvm/v0.6.14/bin/node-waf configure build
+#
+
+----------------------------------------
+Setting srcdir to
+/home/skomski/Code/node-curl
+
+----------------------------------------
+Setting blddir to
+/home/skomski/Code/node-curl/build
+
+----------------------------------------
+Checking for program g++ or c++
+  find program=['g++', 'c++'] paths=[] var='CXX'
+  -> '/usr/local/bin/g++'
+
+----------------------------------------
+Checking for program cpp
+  find program=['cpp'] paths=[] var='CPP'
+  -> '/usr/bin/cpp'
+
+----------------------------------------
+Checking for program ar
+  find program=['ar'] paths=[] var='AR'
+  -> '/usr/bin/ar'
+
+----------------------------------------
+Checking for program ranlib
+  find program=['ranlib'] paths=[] var='RANLIB'
+  -> '/usr/bin/ranlib'
+
+----------------------------------------
+Checking for g++ 
+ok 
+
+----------------------------------------
+Checking for node path 
+not found
+
+----------------------------------------
+Checking for node prefix 
+ok /home/skomski/.nvm/v0.6.14
+
+----------------------------------------
+Checking for libcurl
+pkg-config --errors-to-stdout --print-errors --cflags --libs libcurl
+ -lcurl  
+yes
