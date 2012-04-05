@@ -39,8 +39,8 @@ namespace nodecurl {
     wrapper_template->SetClassName(String::NewSymbol("CurlEasyWrapper"));
     wrapper_template->InstanceTemplate()->SetInternalFieldCount(1);
 
-    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("setOption"),
-        FunctionTemplate::New(SetOption)->GetFunction());
+    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setOption"),
+        FunctionTemplate::New(SetOption_)->GetFunction());
 
     Persistent<Function> constructor = Persistent<Function>::New(
         wrapper_template->GetFunction());
@@ -58,7 +58,6 @@ namespace nodecurl {
 
   size_t CurlEasyWrapper::WriteFunction(char *ptr, size_t size, size_t nmemb,
       void *userdata) {
-    fprintf(stderr, "write - size=%ld\n", size);
     CurlEasyWrapper *wrapper = (CurlEasyWrapper*)userdata;
     return wrapper->OnData(ptr, size * nmemb);
   }
@@ -71,11 +70,13 @@ namespace nodecurl {
     return size;
   }
 
-  Handle<Value> CurlEasyWrapper::SetOption(const Arguments& args) {
+  Handle<Value> CurlEasyWrapper::SetOption_(const Arguments& args) {
     HandleScope scope;
     CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
 
-    curl_easy_setopt(wrapper->easy_handle_, CURLOPT_URL, "http://skomski.com");
+    const CURLoption option = (CURLoption) args[0]->Int32Value();
+
+    curl_easy_setopt(wrapper->easy_handle_, option, *String::Utf8Value(args[1]));
 
     return scope.Close(Undefined());
   }

@@ -16,6 +16,5 @@ request.on('end', function() {
   console.error('end')
 });
 
-request.setOption();
-
+request.setOption('url', 'http://skomski.com');
 pool.execute(request);
