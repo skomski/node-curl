@@ -21,7 +21,7 @@ def build(bld):
   obj.source = [
     'src/addon.cc',
     'src/curl_easy_wrapper.cc',
-    'src/curl_wrapper.cc',
+    'src/curl_multi_wrapper.cc',
     'src/helpers.cc'
   ]
   obj.env.append_value('LINKFLAGS','-lcurl')

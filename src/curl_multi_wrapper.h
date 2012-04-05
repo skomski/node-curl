@@ -1,7 +1,7 @@
 // Copyright 2012 Karl Skomski MIT
 
-#ifndef SRC_CURL_WRAPPER_H_
-#define SRC_CURL_WRAPPER_H_
+#ifndef SRC_CURL_MULTI_WRAPPER_H_
+#define SRC_CURL_MULTI_WRAPPER_H_
 
 #include "curl/curl.h"
 #include "node.h"
@@ -10,14 +10,14 @@
 #include "curl_easy_wrapper.h"
 
 namespace nodecurl {
-  class CurlWrapper : public node::ObjectWrap {
+  class CurlMultiWrapper : public node::ObjectWrap {
     public:
       static void Initialize(v8::Handle<v8::Object> target);
     private:
       typedef std::map<curl_socket_t, ev_io> SockFDs;
 
-      CurlWrapper();
-      ~CurlWrapper();
+      CurlMultiWrapper();
+      ~CurlMultiWrapper();
 
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
@@ -39,4 +39,4 @@ namespace nodecurl {
   };
 }
 
-#endif  // SRC_CURL_WRAPPER_H_
+#endif  // SRC_CURL_MULTI_WRAPPER_H_
