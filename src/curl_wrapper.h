@@ -7,6 +7,7 @@
 #include "node.h"
 #include "helpers.h"
 #include <map>
+#include "curl_easy_wrapper.h"
 
 namespace nodecurl {
   class CurlWrapper : public node::ObjectWrap {
@@ -22,7 +23,6 @@ namespace nodecurl {
 
       static v8::Handle<v8::Value> Execute(const v8::Arguments& args);
       static v8::Handle<v8::Value> Close(const v8::Arguments& args);
-      static v8::Handle<v8::Value> SetOption(const v8::Arguments& args);
 
       static int TimerFunction(CURLM* mh, long timeout, void* userp);
       static int SocketFunction(CURLM* mh, curl_socket_t sockfd,
@@ -31,11 +31,6 @@ namespace nodecurl {
       static void TimerEventFunction(EV_P_ ev_timer* timer, int events);
 
       bool ProcessEvents(int fd, int action);
-
-      size_t OnData(char* data, size_t size);
-      static size_t WriteFunction(
-          char* ptr, size_t size, size_t nmemb, void *userdata);
-
 
       CURLM* const multi_handle_;
       unsigned int num_easy_handles_;

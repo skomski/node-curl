@@ -20,6 +20,7 @@ def build(bld):
   obj.target = 'addon'
   obj.source = [
     'src/addon.cc',
+    'src/curl_easy_wrapper.cc',
     'src/curl_wrapper.cc',
     'src/helpers.cc'
   ]

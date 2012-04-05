@@ -53,9 +53,6 @@ namespace nodecurl {
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("execute"),
         FunctionTemplate::New(Execute)->GetFunction());
 
-    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("setOption"),
-        FunctionTemplate::New(SetOption)->GetFunction());
-
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("close"),
         FunctionTemplate::New(Close)->GetFunction());
 
@@ -71,13 +68,6 @@ namespace nodecurl {
     wrapper->Wrap(args.This());
 
     return scope.Close(args.This());
-  }
-
-  size_t CurlWrapper::WriteFunction(char *ptr, size_t size, size_t nmemb,
-      void *userdata) {
-    fprintf(stderr, "write - size=%ld\n", size);
-    CurlWrapper *wrapper = (CurlWrapper*)userdata;
-    return wrapper->OnData(ptr, size * nmemb);
   }
 
   bool CurlWrapper::ProcessEvents(int fd, int action) {
@@ -96,7 +86,6 @@ namespace nodecurl {
     if (running_handles == 0) {
       fprintf(stderr, "running_handles=%d\n", running_handles);
       ev_timer_stop(EV_DEFAULT_ &timeout_timer_);
-      ev_unref(EV_DEFAULT);
     }
 
     int messages_in_queue = 0;
@@ -195,39 +184,18 @@ namespace nodecurl {
     wrapper->ProcessEvents(watcher->fd, action);
   }
 
-  size_t CurlWrapper::OnData(char *data, size_t size) {
-    assert(size > 0);
-
-    node::Buffer *buffer = node::Buffer::New(data, size);
-    helpers::Emit(this->handle_, "data", buffer->handle_);
-    return size;
-  }
-
   Handle<Value> CurlWrapper::Execute(const Arguments& args) {
     HandleScope scope;
     CurlWrapper* wrapper = ObjectWrap::Unwrap<CurlWrapper>(args.This());
+    CurlEasyWrapper* easy_wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args[0]->ToObject());
 
-    CURL *easy_handle = curl_easy_init();
-    if(easy_handle == NULL) {
-      helpers::EmitError(wrapper->handle_, "CurlEasyInit failed");
-      return scope.Close(Undefined());
-    }
-
-    curl_easy_setopt(easy_handle, CURLOPT_URL, "http://twitter.com");
-    curl_easy_setopt(easy_handle, CURLOPT_WRITEFUNCTION, WriteFunction);
-    curl_easy_setopt(easy_handle, CURLOPT_WRITEDATA, wrapper);
-
-    CURLMcode status = curl_multi_add_handle(wrapper->multi_handle_, easy_handle);
+    CURLMcode status = curl_multi_add_handle(wrapper->multi_handle_, easy_wrapper->getHandle());
     if (status != CURLM_OK) {
       helpers::EmitCurlMultiError(wrapper->handle_, status);
       return scope.Close(Undefined());
     }
 
     wrapper->num_easy_handles_ += 1;
-
-    if (wrapper->num_easy_handles_ == 1) {
-      ev_ref(EV_DEFAULT);
-    }
 
     return scope.Close(Undefined());
   }
@@ -237,12 +205,6 @@ namespace nodecurl {
     CurlWrapper* wrapper = ObjectWrap::Unwrap<CurlWrapper>(args.This());
 
     curl_multi_cleanup(wrapper->multi_handle_);
-
-    return scope.Close(Undefined());
-  }
-
-  Handle<Value> CurlWrapper::SetOption(const Arguments& args) {
-    HandleScope scope;
 
     return scope.Close(Undefined());
   }
