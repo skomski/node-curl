@@ -95,8 +95,9 @@ namespace nodecurl {
 
     if (running_handles == 0) {
       fprintf(stderr, "running_handles=%d\n", running_handles);
-      ev_timer_stop(ev_default_loop(0), &timeout_timer_);
-      //this->Unref();
+      ev_timer_stop(ev_default_loop(), &timeout_timer_);
+      this->Unref();
+      ev_unref(ev_default_loop());
     }
 
     int messages_in_queue = 0;
@@ -104,6 +105,7 @@ namespace nodecurl {
 
     while ((message = curl_multi_info_read(multi_handle_, &messages_in_queue))) {
       if (message->msg == CURLMSG_DONE) {
+        fprintf(stderr, "done");
         curl_multi_remove_handle(multi_handle_, message->easy_handle);
         curl_easy_cleanup(message->easy_handle);
       }
@@ -122,7 +124,7 @@ namespace nodecurl {
   int CurlWrapper::TimerFunction(CURLM* /*handle*/, long timeout, void* userp) {
     CurlWrapper* wrapper = static_cast<CurlWrapper*>(userp);
 
-    ev_timer_stop(ev_default_loop(0), &wrapper->timeout_timer_);
+    ev_timer_stop(ev_default_loop(), &wrapper->timeout_timer_);
 
     if (timeout == -1) {
       wrapper->ProcessEvents(CURL_SOCKET_TIMEOUT, 0);
@@ -135,8 +137,8 @@ namespace nodecurl {
 
     fprintf(stderr, "timeout=%ld\n", timeout);
 
-    ev_timer_set(&wrapper->timeout_timer_, timeout / 1000, 0.);
-    ev_timer_start(ev_default_loop(0), &wrapper->timeout_timer_);
+    ev_timer_set(&wrapper->timeout_timer_, timeout / 1000., 0.);
+    ev_timer_start(ev_default_loop(), &wrapper->timeout_timer_);
 
     return CURLM_OK;
   }
@@ -145,11 +147,11 @@ namespace nodecurl {
       void* userp, void* /*socketp*/) {
     CurlWrapper* wrapper = static_cast<CurlWrapper*>(userp);
 
-    fprintf(stderr, "sockfd=%d events=%d\n", sockfd, events);
-
     int lib_events =
       (events & CURL_POLL_IN ?  EV_READ  : 0) |
       (events & CURL_POLL_OUT ? EV_WRITE : 0) ;
+
+    fprintf(stderr, "sockfd=%d events=%d libevents=%d\n", sockfd, events, lib_events);
 
     SockFDs::iterator it = wrapper->socket_fds_.find(sockfd);
     if (it == wrapper->socket_fds_.end()) {
@@ -161,7 +163,7 @@ namespace nodecurl {
 
         ev_io_init(&watcher, IOEventFunction, sockfd, lib_events);
 
-        ev_io_start(ev_default_loop(0), &watcher);
+        ev_io_start(ev_default_loop(), &watcher);
         watcher.data = wrapper;
       } else {
         assert(0 && "CURL_POLL_NONE or CURL_POLL_REMOVE for bad socket");
@@ -176,7 +178,7 @@ namespace nodecurl {
       else {
         // disarm and dispose fd watcher
         fprintf(stderr, "disarm\n");
-        ev_io_stop(ev_default_loop(0), &watcher);
+        ev_io_stop(ev_default_loop(), &watcher);
         wrapper->socket_fds_.erase(it);
       }
     }
@@ -224,6 +226,7 @@ namespace nodecurl {
 
     if (wrapper->num_easy_handles_ == 1) {
       wrapper->Ref();
+      ev_ref(ev_default_loop());
     }
 
     return scope.Close(Undefined());
