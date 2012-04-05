@@ -4,28 +4,7 @@
 
 node.js bindings for libcurl
 
-## Install
-
-```
-npm install curl
-```
-
-## Usage
-
-```javascript
-var Curl = require('curl');
-
-var curl = new Curl({
-  persistent: true
-});
-
-curl.request('http://teamliquid.net', function(err, res) {
-  if (err) throw err;
-  console.log(res);
-});
-
-curl.end();
-```
+# WIP
 
 ## License
 
