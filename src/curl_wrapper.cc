@@ -95,9 +95,8 @@ namespace nodecurl {
 
     if (running_handles == 0) {
       fprintf(stderr, "running_handles=%d\n", running_handles);
-      ev_timer_stop(ev_default_loop(), &timeout_timer_);
-      this->Unref();
-      ev_unref(ev_default_loop());
+      ev_timer_stop(EV_DEFAULT_ &timeout_timer_);
+      ev_unref(EV_DEFAULT);
     }
 
     int messages_in_queue = 0;
@@ -124,7 +123,7 @@ namespace nodecurl {
   int CurlWrapper::TimerFunction(CURLM* /*handle*/, long timeout, void* userp) {
     CurlWrapper* wrapper = static_cast<CurlWrapper*>(userp);
 
-    ev_timer_stop(ev_default_loop(), &wrapper->timeout_timer_);
+    ev_timer_stop(EV_DEFAULT_ &wrapper->timeout_timer_);
 
     if (timeout == -1) {
       wrapper->ProcessEvents(CURL_SOCKET_TIMEOUT, 0);
@@ -137,8 +136,8 @@ namespace nodecurl {
 
     fprintf(stderr, "timeout=%ld\n", timeout);
 
-    ev_timer_set(&wrapper->timeout_timer_, timeout / 1000., 0.);
-    ev_timer_start(ev_default_loop(), &wrapper->timeout_timer_);
+    ev_timer_set(&wrapper->timeout_timer_, timeout / 1000, 0);
+    ev_timer_start(EV_DEFAULT_ &wrapper->timeout_timer_);
 
     return CURLM_OK;
   }
@@ -155,7 +154,7 @@ namespace nodecurl {
 
     SockFDs::iterator it = wrapper->socket_fds_.find(sockfd);
     if (it == wrapper->socket_fds_.end()) {
-      if (events) {
+      if (lib_events) {
         fprintf(stderr, "create\n");
         // create I/O watcher and add it to the list
         ev_io& watcher = wrapper->socket_fds_.insert(
@@ -163,22 +162,24 @@ namespace nodecurl {
 
         ev_io_init(&watcher, IOEventFunction, sockfd, lib_events);
 
-        ev_io_start(ev_default_loop(), &watcher);
+        ev_io_start(EV_DEFAULT_ &watcher);
         watcher.data = wrapper;
       } else {
         assert(0 && "CURL_POLL_NONE or CURL_POLL_REMOVE for bad socket");
       }
     } else {
       ev_io& watcher = it->second;
-      if (events) {
+      if (lib_events) {
         // update the event flags
         fprintf(stderr, "update\n");
-        ev_io_set(&watcher, sockfd, events);
+        ev_io_stop(EV_DEFAULT_ &watcher);
+        ev_io_set(&watcher, sockfd, lib_events);
+        ev_io_start(EV_DEFAULT_ &watcher);
       }
       else {
         // disarm and dispose fd watcher
         fprintf(stderr, "disarm\n");
-        ev_io_stop(ev_default_loop(), &watcher);
+        ev_io_stop(EV_DEFAULT_ &watcher);
         wrapper->socket_fds_.erase(it);
       }
     }
@@ -212,7 +213,7 @@ namespace nodecurl {
       return scope.Close(Undefined());
     }
 
-    curl_easy_setopt(easy_handle, CURLOPT_URL, "http://google.com");
+    curl_easy_setopt(easy_handle, CURLOPT_URL, "http://twitter.com");
     curl_easy_setopt(easy_handle, CURLOPT_WRITEFUNCTION, WriteFunction);
     curl_easy_setopt(easy_handle, CURLOPT_WRITEDATA, wrapper);
 
@@ -225,8 +226,7 @@ namespace nodecurl {
     wrapper->num_easy_handles_ += 1;
 
     if (wrapper->num_easy_handles_ == 1) {
-      wrapper->Ref();
-      ev_ref(ev_default_loop());
+      ev_ref(EV_DEFAULT);
     }
 
     return scope.Close(Undefined());

@@ -24,9 +24,6 @@ namespace nodecurl {
       static v8::Handle<v8::Value> Close(const v8::Arguments& args);
       static v8::Handle<v8::Value> SetOption(const v8::Arguments& args);
 
-      static void ExecuteWork(uv_work_t *job);
-      static void ExecuteDone(uv_work_t *job);
-
       static int TimerFunction(CURLM* mh, long timeout, void* userp);
       static int SocketFunction(CURLM* mh, curl_socket_t sockfd,
           int events, void* userp, void* socketp);
