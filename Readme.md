@@ -1,6 +1,6 @@
 # node-curl [![Build Status](https://secure.travis-ci.org/Skomski/node-curl.png?branch=unstable)](http://travis-ci.org/Skomski/node-curl)
 
-node.js bindings for libcurl
+node.js binding for libcurl
 
 # WIP
 
