@@ -42,8 +42,11 @@ namespace nodecurl {
     wrapper_template->SetClassName(String::NewSymbol("CurlEasyWrapper"));
     wrapper_template->InstanceTemplate()->SetInternalFieldCount(1);
 
-    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setOption"),
-        FunctionTemplate::New(SetOption_)->GetFunction());
+    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setNumberOption"),
+        FunctionTemplate::New(SetNumberOption_)->GetFunction());
+
+    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setStringOption"),
+        FunctionTemplate::New(SetStringOption_)->GetFunction());
 
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("resume"),
         FunctionTemplate::New(Resume)->GetFunction());
@@ -79,13 +82,50 @@ namespace nodecurl {
     return size;
   }
 
-  Handle<Value> CurlEasyWrapper::SetOption_(const Arguments& args) {
+  Handle<Value> CurlEasyWrapper::SetNumberOption_(const Arguments& args) {
     HandleScope scope;
     CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
 
+    if (args.Length() < 2) {
+      helpers::ThrowError("Need 2 arguments");
+      return scope.Close(Undefined());
+    }
+
+    if (!args[0]->IsNumber() || !args[1]->IsNumber()) {
+      helpers::ThrowError("Need number[0] and number[1]");
+      return scope.Close(Undefined());
+    }
+
     const CURLoption option = (CURLoption) args[0]->Int32Value();
 
-    const CURLcode status = curl_easy_setopt(wrapper->easy_handle_, option, *String::Utf8Value(args[1]));
+    const CURLcode status = curl_easy_setopt(
+        wrapper->easy_handle_, option, args[1]->Int32Value());
+
+    if (status != CURLE_OK) {
+      helpers::EmitCurlError(wrapper->handle_, status);
+    }
+
+    return scope.Close(Undefined());
+  }
+
+  Handle<Value> CurlEasyWrapper::SetStringOption_(const Arguments& args) {
+    HandleScope scope;
+    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
+
+    if (args.Length() < 2) {
+      helpers::ThrowError("Need 2 arguments");
+      return scope.Close(Undefined());
+    }
+
+    if (!args[0]->IsNumber() || !args[1]->IsString()) {
+      helpers::ThrowError("Need number[0] and string[1]");
+      return scope.Close(Undefined());
+    }
+
+    const CURLoption option = (CURLoption) args[0]->Int32Value();
+
+    const CURLcode status = curl_easy_setopt(
+        wrapper->easy_handle_, option, *String::Utf8Value(args[1]));
 
     if (status != CURLE_OK) {
       helpers::EmitCurlError(wrapper->handle_, status);

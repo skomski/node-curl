@@ -11,6 +11,7 @@ request.on('error', function(err) {
 });
 
 request.setOption('url', 'fail');
+request.setOption('verbose', true);
 request.execute();
 
 process.on('exit', function() {

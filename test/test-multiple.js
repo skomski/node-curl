@@ -3,6 +3,7 @@ var assert = require('assert');
 
 var request200 = curl.createRequest();
 request200.setOption('url', 'http://jsfiddle.net/echo/jsonp/?status=200');
+request200.setOption('verbose', true);
 
 request200Data = '';
 request200Finished = false;
@@ -19,6 +20,7 @@ request200.on('end', function() {
 
 var request400 = curl.createRequest();
 request400.setOption('url', 'http://jsfiddle.net/echo/jsonp/?status=400');
+request400.setOption('verbose', true);
 
 request400Data = '';
 request400Finished = false;
