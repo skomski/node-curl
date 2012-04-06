@@ -1,8 +1,7 @@
 var curl   = require('..');
 var assert = require('assert');
 
-var pool    = curl.createPool();
-var request200 = curl.createHandle();
+var request200 = curl.createRequest();
 request200.setOption('url', 'http://jsfiddle.net/echo/jsonp/?status=200');
 
 request200Data = '';
@@ -18,7 +17,7 @@ request200.on('end', function() {
   request200Finished = true;
 });
 
-var request400 = curl.createHandle();
+var request400 = curl.createRequest();
 request400.setOption('url', 'http://jsfiddle.net/echo/jsonp/?status=400');
 
 request400Data = '';
@@ -34,8 +33,8 @@ request400.on('end', function(buffer) {
   request400Finished = true;
 });
 
-pool.execute(request200);
-pool.execute(request400);
+request200.execute();
+request400.execute();
 
 process.on('exit', function() {
   assert.ok(request200Finished, 'request200Finished != true');

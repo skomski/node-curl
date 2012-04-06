@@ -1,8 +1,7 @@
 var curl   = require('..');
 var assert = require('assert');
 
-var pool    = curl.createPool();
-var request = curl.createHandle();
+var request = curl.createRequest();
 
 var testFinished = false;
 
@@ -20,7 +19,7 @@ request.on('end', function() {
 });
 
 request.setOption('url', 'http://jsfiddle.net/echo/jsonp/?status=200&testData=1234567890');
-pool.execute(request);
+request.execute();
 
 process.on('exit', function() {
   assert.ok(testFinished, 'testFinished != true');

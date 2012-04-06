@@ -1,8 +1,7 @@
 var curl   = require('..');
 var assert = require('assert');
 
-var pool    = curl.createPool();
-var request = curl.createHandle();
+var request = curl.createRequest();
 
 var testFinished = false;
 
@@ -12,7 +11,7 @@ request.on('error', function(err) {
 });
 
 request.setOption('url', 'fail');
-pool.execute(request);
+request.execute();
 
 process.on('exit', function() {
   assert.ok(testFinished, 'testFinished != true');
