@@ -75,7 +75,7 @@ namespace nodecurl {
     const CURLMcode status = curl_multi_socket_action(
         multi_handle_, fd, action, &running_handles);
 
-    fprintf(stderr, "fd=%d action=%d status=%d\n", fd, action, status);
+    //fprintf(stderr, "fd=%d action=%d status=%d\n", fd, action, status);
 
     if (status != CURLM_OK) {
       helpers::EmitCurlMultiError(this->handle_, status);
@@ -83,7 +83,6 @@ namespace nodecurl {
     }
 
     if (running_handles == 0) {
-      fprintf(stderr, "running_handles=%d\n", running_handles);
       ev_timer_stop(EV_DEFAULT_ &timeout_timer_);
     }
 
@@ -100,6 +99,7 @@ namespace nodecurl {
         }
         helpers::Emit(*reinterpret_cast<Handle<Object>*>(handle), "end", Undefined());
         curl_multi_remove_handle(multi_handle_, message->easy_handle);
+        this->num_easy_handles_ -= 1;
       }
     }
 
@@ -127,8 +127,6 @@ namespace nodecurl {
       timeout = 5000;
     }
 
-    fprintf(stderr, "timeout=%ld\n", timeout);
-
     ev_timer_set(&wrapper->timeout_timer_, timeout / 1000, 0);
     ev_timer_start(EV_DEFAULT_ &wrapper->timeout_timer_);
 
@@ -143,12 +141,9 @@ namespace nodecurl {
       (events & CURL_POLL_IN ?  EV_READ  : 0) |
       (events & CURL_POLL_OUT ? EV_WRITE : 0) ;
 
-    fprintf(stderr, "sockfd=%d events=%d libevents=%d\n", sockfd, events, lib_events);
-
     SockFDs::iterator it = wrapper->socket_fds_.find(sockfd);
     if (it == wrapper->socket_fds_.end()) {
       if (lib_events) {
-        fprintf(stderr, "create\n");
         // create I/O watcher and add it to the list
         ev_io& watcher = wrapper->socket_fds_.insert(
             SockFDs::value_type(sockfd, ev_io())).first->second;
@@ -164,14 +159,12 @@ namespace nodecurl {
       ev_io& watcher = it->second;
       if (lib_events) {
         // update the event flags
-        fprintf(stderr, "update\n");
         ev_io_stop(EV_DEFAULT_ &watcher);
         ev_io_set(&watcher, sockfd, lib_events);
         ev_io_start(EV_DEFAULT_ &watcher);
       }
       else {
         // disarm and dispose fd watcher
-        fprintf(stderr, "disarm\n");
         ev_io_stop(EV_DEFAULT_ &watcher);
         wrapper->socket_fds_.erase(it);
       }
