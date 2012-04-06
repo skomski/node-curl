@@ -3,7 +3,11 @@
   "name": "curl",
   "description": "node.js bindings for libcurl",
   "version": "0.0.1",
-  "keywords": ["curl", "download", "upload"],
+  "keywords": [
+    "curl",
+    "download",
+    "upload"
+  ],
   "repository": {
     "url": "git://github.com/Skomski/node-curl.git"
   },
@@ -15,10 +19,11 @@
   },
   "devDependencies": {
     "urun": "0.0.6",
-    "utest": "0.0.5"
+    "utest": "0.0.5",
+    "benchmark": "~0.3.0"
   },
   "optionalDependencies": {},
   "engines": {
-    "node":">=0.4.0"
+    "node": ">=0.4.0"
   }
 }
