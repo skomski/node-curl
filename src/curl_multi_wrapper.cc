@@ -72,7 +72,7 @@ namespace nodecurl {
   bool CurlMultiWrapper::ProcessEvents(int fd, int action) {
     int running_handles = 0;
 
-    CURLMcode status = curl_multi_socket_action(
+    const CURLMcode status = curl_multi_socket_action(
         multi_handle_, fd, action, &running_handles);
 
     fprintf(stderr, "fd=%d action=%d status=%d\n", fd, action, status);
@@ -92,9 +92,14 @@ namespace nodecurl {
 
     while ((message = curl_multi_info_read(multi_handle_, &messages_in_queue))) {
       if (message->msg == CURLMSG_DONE) {
-        fprintf(stderr, "done");
+        char* handle;
+        curl_easy_getinfo(message->easy_handle, CURLINFO_PRIVATE, &handle);
+
+        if (message->data.result != CURLE_OK) {
+          helpers::EmitCurlError(*reinterpret_cast<Handle<Object>*>(handle), message->data.result);
+        }
+        helpers::Emit(*reinterpret_cast<Handle<Object>*>(handle), "end", Undefined());
         curl_multi_remove_handle(multi_handle_, message->easy_handle);
-        curl_easy_cleanup(message->easy_handle);
       }
     }
 

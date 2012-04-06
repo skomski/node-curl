@@ -20,6 +20,8 @@ namespace nodecurl {
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
       static v8::Handle<v8::Value> SetOption_(const v8::Arguments& args);
+      static v8::Handle<v8::Value> Pause(const v8::Arguments& args);
+      static v8::Handle<v8::Value> Resume(const v8::Arguments& args);
 
       size_t OnData(char* data, size_t size);
       static size_t WriteFunction(
