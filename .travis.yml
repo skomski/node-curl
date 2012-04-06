@@ -3,3 +3,6 @@ language: node_js
 node_js:
   - 0.4
   - 0.6
+
+after_script:
+  - "node benchmark/simple.js"
