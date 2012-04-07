@@ -33,7 +33,7 @@ namespace nodecurl {
     curl_multi_setopt(multi_handle_, CURLMOPT_TIMERFUNCTION, TimerFunction);
     curl_multi_setopt(multi_handle_, CURLMOPT_TIMERDATA, this);
 
-    ev_init(&timeout_timer_, TimerEventFunction);
+    ev_init(&timeout_timer_, CurlMultiWrapper::TimerEventFunction);
     timeout_timer_.data = this;
   }
 
@@ -109,7 +109,7 @@ namespace nodecurl {
 
   void CurlMultiWrapper::TimerEventFunction(EV_P_ ev_timer* timer, int events) {
     CurlMultiWrapper* wrapper = static_cast<CurlMultiWrapper*>(timer->data);
-    ev_timer_stop(EV_A_ &wrapper->timeout_timer_);
+    ev_timer_stop(EV_A_ timer);
     wrapper->ProcessEvents(CURL_SOCKET_TIMEOUT, 0);
   }
 

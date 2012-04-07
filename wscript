@@ -4,7 +4,7 @@ def set_options(opt):
 def configure(conf):
   conf.check_tool('compiler_cxx')
   conf.check_tool('node_addon')
-  #conf.env.append_unique('CXXFLAGS', ['-Wall', '-Wextra' '-O0'])
+  conf.env.append_unique('CXXFLAGS', ['-Wall', '-O3', '-DNDEBUG'])
   if not conf.check_cfg(package='libcurl', args='--cflags --libs', uselib_store='CURL'):
     if not conf.check(lib="curl", uselib_store="CURL"):
       conf.fatal('Missing libcurl');
