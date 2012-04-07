@@ -24,6 +24,6 @@ generate() {
 generate integer_options 'CINIT\((\w+).*LONG, (\d+)' ${OPT_LONG}
 generate string_options  'CINIT\((\w+).*OBJECTPOINT, (\d+)' ${OPT_OBJECTPOINT}
 
-generate integer_infos 'CURLINFO_(\w+).*LONG \+ (\d+)' ${INFO_LONG}
+generate integer_infos 'CURLINFO_(\w+).*LONG.*\+ (\d+)' ${INFO_LONG}
 generate string_infos 'CURLINFO_(\w+).*STRING \+ (\d+)' ${INFO_STRING}
 generate double_infos 'CURLINFO_(\w+).*DOUBLE \+ (\d+)' ${INFO_DOUBLE}

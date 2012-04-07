@@ -15,7 +15,12 @@ request.on('end', function() {
   var testData = JSON.parse(jsonData);
   assert.equal(testData.status, 200);
   assert.equal(testData.testData, 1234567890);
-  console.log(request.getStringInfo('effectiveUrl'));
+  assert.equal(
+    request.getNumberInfo('response_code'),
+    200);
+  assert.equal(
+    request.getStringInfo('effective_Url'),
+    'http://jsfiddle.net/echo/jsonp/?status=200&testData=1234567890');
   testFinished = true;
 });
 

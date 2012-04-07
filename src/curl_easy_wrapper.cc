@@ -21,6 +21,7 @@ namespace nodecurl {
   using v8::Exception;
   using v8::Undefined;
   using v8::External;
+  using v8::Number;
 
   CurlEasyWrapper::CurlEasyWrapper() :
       easy_handle_(curl_easy_init()), form_(NULL) {
@@ -68,6 +69,14 @@ namespace nodecurl {
     wrapper_template->PrototypeTemplate()->Set(
         String::NewSymbol("_getStringInfo"),
         FunctionTemplate::New(GetStringInfo_)->GetFunction());
+
+    wrapper_template->PrototypeTemplate()->Set(
+        String::NewSymbol("_getDoubleInfo"),
+        FunctionTemplate::New(GetDoubleInfo_)->GetFunction());
+
+    wrapper_template->PrototypeTemplate()->Set(
+        String::NewSymbol("_getIntegerInfo"),
+        FunctionTemplate::New(GetIntegerInfo_)->GetFunction());
 
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("resume"),
         FunctionTemplate::New(Resume)->GetFunction());
@@ -274,39 +283,55 @@ namespace nodecurl {
     return scope.Close(Undefined());
   }
 
-  Handle<Value> CurlEasyWrapper::GetStringInfo_(const Arguments& args) {
-    HandleScope scope;
+  template<typename InfoType, typename ReturnType>
+  Handle<Value> CurlEasyWrapper::GetInfo_(const v8::Arguments &args) {
     CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
 
     if (args.Length() < 1) {
       helpers::ThrowError("Need 1 argument");
-      return scope.Close(Undefined());
+      return Undefined();
     }
 
     if (!args[0]->IsNumber()) {
       helpers::ThrowError("Need number[0]");
-      return scope.Close(Undefined());
+      return Undefined();
     }
 
-    const CURLINFO info = (CURLINFO) args[0]->Int32Value();
+    const CURLINFO info = (CURLINFO)args[0]->Int32Value();
 
-    char *infoData;
+    InfoType infoData;
 
     const CURLcode status = curl_easy_getinfo(
         wrapper->easy_handle_, info, &infoData);
 
     if (status != CURLE_OK) {
       helpers::ThrowCurlError(status);
-      return scope.Close(Undefined());
+      return Undefined();
     }
 
-    return scope.Close(String::New(infoData));
+    return ReturnType::New(infoData);
+  }
+
+  Handle<Value> CurlEasyWrapper::GetStringInfo_(const Arguments& args) {
+    HandleScope scope;
+    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
+    return scope.Close(wrapper->GetInfo_<char*, v8::String>(args));
+  }
+
+  Handle<Value> CurlEasyWrapper::GetDoubleInfo_(const Arguments& args) {
+    HandleScope scope;
+    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
+    return scope.Close(wrapper->GetInfo_<double, v8::Number>(args));
+  }
+
+  Handle<Value> CurlEasyWrapper::GetIntegerInfo_(const Arguments& args) {
+    HandleScope scope;
+    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
+    return scope.Close(wrapper->GetInfo_<int32_t, v8::Integer>(args));
   }
 
   Handle<Value> CurlEasyWrapper::Close(const Arguments& args) {
     HandleScope scope;
-    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
-
     return scope.Close(Undefined());
   }
 }
