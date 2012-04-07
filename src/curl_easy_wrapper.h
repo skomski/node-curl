@@ -27,6 +27,8 @@ namespace nodecurl {
       static v8::Handle<v8::Value> SetListOption_(const v8::Arguments& args);
       static v8::Handle<v8::Value> SetFormData_(const v8::Arguments& args);
 
+      static v8::Handle<v8::Value> GetStringInfo_(const v8::Arguments& args);
+
       static v8::Handle<v8::Value> Pause(const v8::Arguments& args);
       static v8::Handle<v8::Value> Resume(const v8::Arguments& args);
       static v8::Handle<v8::Value> Close(const v8::Arguments& args);

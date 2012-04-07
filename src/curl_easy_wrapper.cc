@@ -65,6 +65,10 @@ namespace nodecurl {
         String::NewSymbol("_setFormData"),
         FunctionTemplate::New(SetFormData_)->GetFunction());
 
+    wrapper_template->PrototypeTemplate()->Set(
+        String::NewSymbol("_getStringInfo"),
+        FunctionTemplate::New(GetStringInfo_)->GetFunction());
+
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("resume"),
         FunctionTemplate::New(Resume)->GetFunction());
 
@@ -268,6 +272,35 @@ namespace nodecurl {
     }
 
     return scope.Close(Undefined());
+  }
+
+  Handle<Value> CurlEasyWrapper::GetStringInfo_(const Arguments& args) {
+    HandleScope scope;
+    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
+
+    if (args.Length() < 1) {
+      helpers::ThrowError("Need 1 argument");
+      return scope.Close(Undefined());
+    }
+
+    if (!args[0]->IsNumber()) {
+      helpers::ThrowError("Need number[0]");
+      return scope.Close(Undefined());
+    }
+
+    const CURLINFO info = (CURLINFO) args[0]->Int32Value();
+
+    char *infoData;
+
+    const CURLcode status = curl_easy_getinfo(
+        wrapper->easy_handle_, info, &infoData);
+
+    if (status != CURLE_OK) {
+      helpers::ThrowCurlError(status);
+      return scope.Close(Undefined());
+    }
+
+    return scope.Close(String::New(infoData));
   }
 
   Handle<Value> CurlEasyWrapper::Close(const Arguments& args) {

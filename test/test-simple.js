@@ -15,6 +15,7 @@ request.on('end', function() {
   var testData = JSON.parse(jsonData);
   assert.equal(testData.status, 200);
   assert.equal(testData.testData, 1234567890);
+  console.log(request.getStringInfo('effectiveUrl'));
   testFinished = true;
 });
 
