@@ -21,7 +21,8 @@ namespace nodecurl {
   using v8::Undefined;
   using v8::External;
 
-  CurlMultiWrapper::CurlMultiWrapper() : multi_handle_(curl_multi_init()), num_easy_handles_(0) {
+  CurlMultiWrapper::CurlMultiWrapper() :
+      multi_handle_(curl_multi_init()), num_easy_handles_(0) {
     if (multi_handle_ == NULL) {
       ThrowException(String::New("MultiHandleInit failed!"));
       return;
@@ -87,18 +88,25 @@ namespace nodecurl {
     int messages_in_queue = 0;
     CURLMsg *message;
 
-    while ((message = curl_multi_info_read(multi_handle_, &messages_in_queue))) {
+    while (
+        (message = curl_multi_info_read(multi_handle_, &messages_in_queue))) {
       if (message->msg == CURLMSG_DONE) {
         char* handle;
         curl_easy_getinfo(message->easy_handle, CURLINFO_PRIVATE, &handle);
 
         if (message->data.result != CURLE_OK) {
-          helpers::EmitCurlError(*reinterpret_cast<Handle<Object>*>(handle), message->data.result);
+          helpers::EmitCurlError(*reinterpret_cast<Handle<Object>*>(handle),
+              message->data.result);
         }
-        helpers::Emit(*reinterpret_cast<Handle<Object>*>(handle), "end", Undefined());
+        helpers::Emit(*reinterpret_cast<Handle<Object>*>(handle), "end",
+            Undefined());
+
         curl_multi_remove_handle(multi_handle_, message->easy_handle);
+
         this->num_easy_handles_ -= 1;
-        if (running_handles == 0 && num_easy_handles_ == 0) ev_unref(EV_DEFAULT_UC);
+        if (running_handles == 0 && num_easy_handles_ == 0) {
+          ev_unref(EV_DEFAULT_UC);
+        }
       }
     }
 
@@ -113,7 +121,7 @@ namespace nodecurl {
     wrapper->ProcessEvents(CURL_SOCKET_TIMEOUT, 0);
   }
 
-  int CurlMultiWrapper::TimerFunction(CURLM* /*handle*/, long timeout, void* userp) {
+  int CurlMultiWrapper::TimerFunction(CURLM* , int timeout, void* userp) {
     CurlMultiWrapper* wrapper = static_cast<CurlMultiWrapper*>(userp);
 
     if (timeout == 0) {
@@ -131,35 +139,35 @@ namespace nodecurl {
     return CURLM_OK;
   }
 
-  int CurlMultiWrapper::SocketFunction(CURLM* /*handle*/, curl_socket_t sockfd, int events,
-      void* userp, void* /*socketp*/) {
+  int CurlMultiWrapper::SocketFunction(CURLM* /*handle*/, curl_socket_t sockfd,
+      int events, void* userp, void* /*socketp*/) {
     CurlMultiWrapper* wrapper = static_cast<CurlMultiWrapper*>(userp);
 
     int lib_events =
       (events & CURL_POLL_IN ?  EV_READ  : 0) |
-      (events & CURL_POLL_OUT ? EV_WRITE : 0) ;
+      (events & CURL_POLL_OUT ? EV_WRITE : 0);
 
     SockFDs::iterator it = wrapper->socket_fds_.find(sockfd);
     if (it == wrapper->socket_fds_.end()) {
       if (lib_events) {
         // create I/O watcher and add it to the list
-        ev_io& watcher = wrapper->socket_fds_.insert(
+        ev_io *watcher = &wrapper->socket_fds_.insert(
             SockFDs::value_type(sockfd, ev_io())).first->second;
 
-        watcher.data = wrapper;
-        ev_io_init(&watcher, IOEventFunction, sockfd, lib_events);
-        ev_io_start(EV_DEFAULT_UC_ &watcher);
+        watcher->data = wrapper;
+        ev_io_init(watcher, IOEventFunction, sockfd, lib_events);
+        ev_io_start(EV_DEFAULT_UC_ watcher);
       } else {
         assert(0 && "CURL_POLL_NONE or CURL_POLL_REMOVE for bad socket");
       }
     } else {
-      ev_io& watcher = it->second;
+      ev_io *watcher = &it->second;
       if (lib_events) {
-        ev_io_stop(EV_DEFAULT_UC_ &watcher);
-        ev_io_set(&watcher, sockfd, lib_events);
-        ev_io_start(EV_DEFAULT_UC_ &watcher);
+        ev_io_stop(EV_DEFAULT_UC_ watcher);
+        ev_io_set(watcher, sockfd, lib_events);
+        ev_io_start(EV_DEFAULT_UC_ watcher);
       } else {
-        ev_io_stop(EV_DEFAULT_UC_ &watcher);
+        ev_io_stop(EV_DEFAULT_UC_ watcher);
         wrapper->socket_fds_.erase(it);
       }
     }
@@ -177,10 +185,14 @@ namespace nodecurl {
 
   Handle<Value> CurlMultiWrapper::Execute(const Arguments& args) {
     HandleScope scope;
-    CurlMultiWrapper* wrapper = ObjectWrap::Unwrap<CurlMultiWrapper>(args.This());
-    CurlEasyWrapper* easy_wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args[0]->ToObject());
+    CurlMultiWrapper* wrapper = ObjectWrap::Unwrap<CurlMultiWrapper>(
+        args.This());
+    CurlEasyWrapper* easy_wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(
+        args[0]->ToObject());
 
-    CURLMcode status = curl_multi_add_handle(wrapper->multi_handle_, easy_wrapper->getHandle());
+    CURLMcode status = curl_multi_add_handle(
+        wrapper->multi_handle_, easy_wrapper->getHandle());
+
     if (status != CURLM_OK) {
       helpers::EmitCurlMultiError(wrapper->handle_, status);
       return scope.Close(Undefined());
@@ -195,7 +207,8 @@ namespace nodecurl {
 
   Handle<Value> CurlMultiWrapper::Close(const Arguments& args) {
     HandleScope scope;
-    CurlMultiWrapper* wrapper = ObjectWrap::Unwrap<CurlMultiWrapper>(args.This());
+    CurlMultiWrapper* wrapper = ObjectWrap::Unwrap<CurlMultiWrapper>(
+        args.This());
 
     curl_multi_cleanup(wrapper->multi_handle_);
 

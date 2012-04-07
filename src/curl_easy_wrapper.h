@@ -3,16 +3,19 @@
 #ifndef SRC_CURL_EASY_WRAPPER_H_
 #define SRC_CURL_EASY_WRAPPER_H_
 
+#include <vector>
+
 #include "curl/curl.h"
 #include "node.h"
+
 #include "helpers.h"
-#include <vector>
 
 namespace nodecurl {
   class CurlEasyWrapper : public node::ObjectWrap {
     public:
       static void Initialize(v8::Handle<v8::Object> target);
       CURL*  getHandle() const { return easy_handle_; }
+
     private:
       CurlEasyWrapper();
       ~CurlEasyWrapper();

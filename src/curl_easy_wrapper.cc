@@ -38,7 +38,7 @@ namespace nodecurl {
     curl_easy_cleanup(easy_handle_);
     if (form_ != NULL) curl_formfree(form_);
     std::vector<curl_slist*>::const_iterator i;
-    for(i = option_lists_.begin(); i != option_lists_.end(); ++i) {
+    for (i = option_lists_.begin(); i != option_lists_.end(); ++i) {
       assert(*i != NULL);
       curl_slist_free_all(*i);
     }
@@ -49,16 +49,20 @@ namespace nodecurl {
     wrapper_template->SetClassName(String::NewSymbol("CurlEasyWrapper"));
     wrapper_template->InstanceTemplate()->SetInternalFieldCount(1);
 
-    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setNumberOption"),
+    wrapper_template->PrototypeTemplate()->Set(
+        String::NewSymbol("_setNumberOption"),
         FunctionTemplate::New(SetNumberOption_)->GetFunction());
 
-    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setStringOption"),
+    wrapper_template->PrototypeTemplate()->Set(
+        String::NewSymbol("_setStringOption"),
         FunctionTemplate::New(SetStringOption_)->GetFunction());
 
-    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setListOption"),
+    wrapper_template->PrototypeTemplate()->Set(
+        String::NewSymbol("_setListOption"),
         FunctionTemplate::New(SetListOption_)->GetFunction());
 
-    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setFormData"),
+    wrapper_template->PrototypeTemplate()->Set(
+        String::NewSymbol("_setFormData"),
         FunctionTemplate::New(SetFormData_)->GetFunction());
 
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("resume"),
@@ -86,7 +90,7 @@ namespace nodecurl {
 
   size_t CurlEasyWrapper::WriteFunction(char *ptr, size_t size, size_t nmemb,
       void *userdata) {
-    CurlEasyWrapper *wrapper = (CurlEasyWrapper*)userdata;
+    CurlEasyWrapper *wrapper = static_cast<CurlEasyWrapper*>(userdata);
     return wrapper->OnData(ptr, size * nmemb);
   }
 
@@ -242,7 +246,8 @@ namespace nodecurl {
     HandleScope scope;
     CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
 
-    const CURLcode status = curl_easy_pause(wrapper->easy_handle_, CURLPAUSE_ALL);
+    const CURLcode status = curl_easy_pause(
+        wrapper->easy_handle_, CURLPAUSE_ALL);
 
     if (status != CURLE_OK) {
       helpers::EmitCurlError(wrapper->handle_, status);
@@ -255,7 +260,8 @@ namespace nodecurl {
     HandleScope scope;
     CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
 
-    const CURLcode status = curl_easy_pause(wrapper->easy_handle_, CURLPAUSE_CONT);
+    const CURLcode status = curl_easy_pause(
+        wrapper->easy_handle_, CURLPAUSE_CONT);
 
     if (status != CURLE_OK) {
       helpers::EmitCurlError(wrapper->handle_, status);
