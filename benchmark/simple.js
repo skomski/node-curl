@@ -3,11 +3,13 @@ var fs        = require('fs')
 var curl      = require('..')
 var http      = require('http')
 
+var processArguments = process.argv.splice(2);
+
 var suite = new Benchmark.Suite();
 
 suite.add('http', function(deferred) {
   var options = {
-    host: 'twitter.com',
+    host: processArguments[0],
     port: 80
   };
 
@@ -17,16 +19,16 @@ suite.add('http', function(deferred) {
     res.on('data', function(buffer) {
       data += buffer;
     });
-    res.on('end', function (chunk) {
+    res.on('end', function () {
       deferred.resolve();
     });
   });
   req.end();
-}, { defer: true, minSamples: 50, maxTime: 30 });
+}, { defer: true, minSamples: 50, maxTime: 10 });
 
 suite.add('curl', function(deferred) {
   var request = curl.createRequest();
-  request.setOption('url', 'http://twitter.com');
+  request.setOption('url', 'http://' + processArguments[0]);
   var data = '';
   request.on('data', function(buffer) {
     data += buffer;
@@ -35,7 +37,7 @@ suite.add('curl', function(deferred) {
     deferred.resolve();
   });
   request.execute();
-},{ defer: true, minSamples: 50, maxTime: 30 });
+},{ defer: true, minSamples: 50, maxTime: 10 });
 
 suite.on('cycle', function(event, bench) {
   console.log(String(bench));
