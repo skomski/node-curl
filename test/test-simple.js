@@ -20,6 +20,7 @@ request.on('end', function() {
 
 request.setOption('url', 'http://jsfiddle.net/echo/jsonp/?status=200&testData=1234567890');
 request.setOption('verbose', true);
+request.setOption('httpHeader', ['X-Source: database']);
 request.execute();
 
 process.on('exit', function() {

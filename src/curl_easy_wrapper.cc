@@ -35,6 +35,11 @@ namespace nodecurl {
 
   CurlEasyWrapper::~CurlEasyWrapper() {
     curl_easy_cleanup(easy_handle_);
+    std::vector<curl_slist*>::const_iterator i;
+    for(i = option_lists_.begin(); i != option_lists_.end(); ++i) {
+      assert(*i != NULL);
+      curl_slist_free_all(*i);
+    }
   }
 
   void CurlEasyWrapper::Initialize(Handle<Object> target) {
@@ -48,11 +53,17 @@ namespace nodecurl {
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setStringOption"),
         FunctionTemplate::New(SetStringOption_)->GetFunction());
 
+    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setListOption"),
+        FunctionTemplate::New(SetListOption_)->GetFunction());
+
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("resume"),
         FunctionTemplate::New(Resume)->GetFunction());
 
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("pause"),
         FunctionTemplate::New(Pause)->GetFunction());
+
+    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("close"),
+        FunctionTemplate::New(Close)->GetFunction());
 
     Persistent<Function> constructor = Persistent<Function>::New(
         wrapper_template->GetFunction());
@@ -80,6 +91,44 @@ namespace nodecurl {
     node::Buffer *buffer = node::Buffer::New(data, size);
     helpers::Emit(this->handle_, "data", buffer->handle_);
     return size;
+  }
+
+  Handle<Value> CurlEasyWrapper::SetListOption_(const Arguments& args) {
+    HandleScope scope;
+    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
+
+    if (args.Length() < 2) {
+      helpers::ThrowError("Need 2 arguments");
+      return scope.Close(Undefined());
+    }
+
+    if (!args[0]->IsNumber() || !args[1]->IsArray()) {
+      helpers::ThrowError("Need number[0] and array[1]");
+      return scope.Close(Undefined());
+    }
+
+    const CURLoption option = (CURLoption) args[0]->Int32Value();
+    curl_slist *list = NULL;
+
+    Local<Array> entries = Local<Array>::Cast(args[1]);
+    int entries_length = entries->Length();
+
+    for (int i = 0; i < entries_length; i++) {
+      String::Utf8Value entry(entries->Get(i));
+      list = curl_slist_append(list, *entry);
+    }
+
+    const CURLcode status = curl_easy_setopt(
+        wrapper->easy_handle_, option, list);
+
+    if (status != CURLE_OK) {
+      curl_slist_free_all(list);
+      helpers::EmitCurlError(wrapper->handle_, status);
+    }
+
+    wrapper->option_lists_.push_back(list);
+
+    return scope.Close(Undefined());
   }
 
   Handle<Value> CurlEasyWrapper::SetNumberOption_(const Arguments& args) {
@@ -147,7 +196,7 @@ namespace nodecurl {
     return scope.Close(Undefined());
   }
 
-Handle<Value> CurlEasyWrapper::Resume(const Arguments& args) {
+  Handle<Value> CurlEasyWrapper::Resume(const Arguments& args) {
     HandleScope scope;
     CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
 
@@ -156,6 +205,13 @@ Handle<Value> CurlEasyWrapper::Resume(const Arguments& args) {
     if (status != CURLE_OK) {
       helpers::EmitCurlError(wrapper->handle_, status);
     }
+
+    return scope.Close(Undefined());
+  }
+
+  Handle<Value> CurlEasyWrapper::Close(const Arguments& args) {
+    HandleScope scope;
+    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
 
     return scope.Close(Undefined());
   }

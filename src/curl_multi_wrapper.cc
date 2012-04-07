@@ -75,16 +75,12 @@ namespace nodecurl {
     const CURLMcode status = curl_multi_socket_action(
         multi_handle_, fd, action, &running_handles);
 
-    //fprintf(stderr, "fd=%d action=%d status=%d\n", fd, action, status);
-
     if (status != CURLM_OK) {
       helpers::EmitCurlMultiError(this->handle_, status);
       return false;
     }
 
-    if (running_handles == 0) {
-      ev_timer_stop(EV_DEFAULT_ &timeout_timer_);
-    }
+    if (running_handles == 0) ev_timer_stop(EV_DEFAULT_ &timeout_timer_);
 
     int messages_in_queue = 0;
     CURLMsg *message;
@@ -105,18 +101,19 @@ namespace nodecurl {
 
     assert(messages_in_queue == 0);
 
+    if (num_easy_handles_ == 0) ev_unref(EV_DEFAULT);
+
     return status == CURLM_OK;
   }
 
   void CurlMultiWrapper::TimerEventFunction(EV_P_ ev_timer* timer, int events) {
     CurlMultiWrapper* wrapper = static_cast<CurlMultiWrapper*>(timer->data);
+    ev_timer_stop(EV_DEFAULT_ &wrapper->timeout_timer_);
     wrapper->ProcessEvents(CURL_SOCKET_TIMEOUT, 0);
   }
 
   int CurlMultiWrapper::TimerFunction(CURLM* /*handle*/, long timeout, void* userp) {
     CurlMultiWrapper* wrapper = static_cast<CurlMultiWrapper*>(userp);
-
-    ev_timer_stop(EV_DEFAULT_ &wrapper->timeout_timer_);
 
     if (timeout == -1) {
       wrapper->ProcessEvents(CURL_SOCKET_TIMEOUT, 0);
@@ -127,8 +124,8 @@ namespace nodecurl {
       timeout = 5000;
     }
 
-    ev_timer_set(&wrapper->timeout_timer_, timeout / 1000, 0);
-    ev_timer_start(EV_DEFAULT_ &wrapper->timeout_timer_);
+    wrapper->timeout_timer_.repeat = timeout / 1000.;
+    ev_timer_again(EV_DEFAULT_ &wrapper->timeout_timer_);
 
     return CURLM_OK;
   }
@@ -148,23 +145,19 @@ namespace nodecurl {
         ev_io& watcher = wrapper->socket_fds_.insert(
             SockFDs::value_type(sockfd, ev_io())).first->second;
 
-        ev_io_init(&watcher, IOEventFunction, sockfd, lib_events);
-
-        ev_io_start(EV_DEFAULT_ &watcher);
         watcher.data = wrapper;
+        ev_io_init(&watcher, IOEventFunction, sockfd, lib_events);
+        ev_io_start(EV_DEFAULT_ &watcher);
       } else {
         assert(0 && "CURL_POLL_NONE or CURL_POLL_REMOVE for bad socket");
       }
     } else {
       ev_io& watcher = it->second;
       if (lib_events) {
-        // update the event flags
         ev_io_stop(EV_DEFAULT_ &watcher);
         ev_io_set(&watcher, sockfd, lib_events);
         ev_io_start(EV_DEFAULT_ &watcher);
-      }
-      else {
-        // disarm and dispose fd watcher
+      } else {
         ev_io_stop(EV_DEFAULT_ &watcher);
         wrapper->socket_fds_.erase(it);
       }
@@ -193,6 +186,8 @@ namespace nodecurl {
     }
 
     wrapper->num_easy_handles_ += 1;
+
+    if (wrapper->num_easy_handles_ == 1) ev_ref(EV_DEFAULT);
 
     return scope.Close(Undefined());
   }

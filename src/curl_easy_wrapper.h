@@ -6,7 +6,7 @@
 #include "curl/curl.h"
 #include "node.h"
 #include "helpers.h"
-#include <map>
+#include <vector>
 
 namespace nodecurl {
   class CurlEasyWrapper : public node::ObjectWrap {
@@ -21,14 +21,17 @@ namespace nodecurl {
 
       static v8::Handle<v8::Value> SetStringOption_(const v8::Arguments& args);
       static v8::Handle<v8::Value> SetNumberOption_(const v8::Arguments& args);
+      static v8::Handle<v8::Value> SetListOption_(const v8::Arguments& args);
       static v8::Handle<v8::Value> Pause(const v8::Arguments& args);
       static v8::Handle<v8::Value> Resume(const v8::Arguments& args);
+      static v8::Handle<v8::Value> Close(const v8::Arguments& args);
 
       size_t OnData(char* data, size_t size);
       static size_t WriteFunction(
           char* ptr, size_t size, size_t nmemb, void *userdata);
 
       CURL* const easy_handle_;
+      std::vector<curl_slist*> option_lists_;
   };
 }
 
