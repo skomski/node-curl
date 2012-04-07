@@ -22,7 +22,8 @@ namespace nodecurl {
   using v8::Undefined;
   using v8::External;
 
-  CurlEasyWrapper::CurlEasyWrapper() : easy_handle_(curl_easy_init()) {
+  CurlEasyWrapper::CurlEasyWrapper() :
+      easy_handle_(curl_easy_init()), form_(NULL) {
     if (easy_handle_ == NULL) {
       helpers::ThrowError("EasyHandleInit failed!");
       return;
@@ -35,6 +36,7 @@ namespace nodecurl {
 
   CurlEasyWrapper::~CurlEasyWrapper() {
     curl_easy_cleanup(easy_handle_);
+    if (form_ != NULL) curl_formfree(form_);
     std::vector<curl_slist*>::const_iterator i;
     for(i = option_lists_.begin(); i != option_lists_.end(); ++i) {
       assert(*i != NULL);
@@ -55,6 +57,9 @@ namespace nodecurl {
 
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setListOption"),
         FunctionTemplate::New(SetListOption_)->GetFunction());
+
+    wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("_setFormData"),
+        FunctionTemplate::New(SetFormData_)->GetFunction());
 
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("resume"),
         FunctionTemplate::New(Resume)->GetFunction());
@@ -91,6 +96,56 @@ namespace nodecurl {
     node::Buffer *buffer = node::Buffer::New(data, size);
     helpers::Emit(this->handle_, "data", buffer->handle_);
     return size;
+  }
+
+  Handle<Value> CurlEasyWrapper::SetFormData_(const Arguments& args) {
+    HandleScope scope;
+    CurlEasyWrapper* wrapper = ObjectWrap::Unwrap<CurlEasyWrapper>(args.This());
+
+    if (args.Length() < 1) {
+      helpers::ThrowError("Need 1 argument");
+      return scope.Close(Undefined());
+    }
+
+    if (!args[0]->IsArray()) {
+      helpers::ThrowError("Need array[1]");
+      return scope.Close(Undefined());
+    }
+
+    if (wrapper->form_ != NULL) curl_formfree(wrapper->form_);
+    wrapper->form_ = NULL;
+    curl_httppost *last_post = NULL;
+
+    Local<Array> entries = Local<Array>::Cast(args[0]);
+    int entries_length = entries->Length();
+
+    for (int i = 0; i < entries_length; i++) {
+      Local<Object> entry = entries->Get(i)->ToObject();
+      String::Utf8Value entry_name(entry->Get(String::NewSymbol("name")));
+      String::Utf8Value entry_content(entry->Get(String::NewSymbol("content")));
+      int type = entry->Get(String::NewSymbol("_type"))->Int32Value();
+
+      const CURLFORMcode status = curl_formadd(&wrapper->form_, &last_post,
+          CURLFORM_COPYNAME, *entry_name,
+          (CURLformoption)type, *entry_content,
+          CURLFORM_END);
+
+      if (status != CURL_FORMADD_OK) {
+        curl_formfree(wrapper->form_);
+        helpers::ThrowError("FormAddError");
+        return scope.Close(Undefined());
+      }
+    }
+
+    const CURLcode status = curl_easy_setopt(
+        wrapper->easy_handle_, CURLOPT_HTTPPOST, wrapper->form_);
+
+    if (status != CURLE_OK) {
+      curl_formfree(wrapper->form_);
+      helpers::ThrowCurlError(status);
+    }
+
+    return scope.Close(Undefined());
   }
 
   Handle<Value> CurlEasyWrapper::SetListOption_(const Arguments& args) {

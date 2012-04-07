@@ -37,7 +37,9 @@ namespace nodecurl {
     timeout_timer_.data = this;
   }
 
-  CurlMultiWrapper::~CurlMultiWrapper() {}
+  CurlMultiWrapper::~CurlMultiWrapper() {
+    curl_multi_cleanup(multi_handle_);
+  }
 
   void CurlMultiWrapper::Initialize(Handle<Object> target) {
     if (curl_global_init(CURL_GLOBAL_ALL) != 0) {
@@ -80,7 +82,7 @@ namespace nodecurl {
       return false;
     }
 
-    if (running_handles == 0) ev_timer_stop(EV_DEFAULT_ &timeout_timer_);
+    if (running_handles == 0) ev_timer_stop(EV_DEFAULT_UC_ &timeout_timer_);
 
     int messages_in_queue = 0;
     CURLMsg *message;
@@ -96,36 +98,35 @@ namespace nodecurl {
         helpers::Emit(*reinterpret_cast<Handle<Object>*>(handle), "end", Undefined());
         curl_multi_remove_handle(multi_handle_, message->easy_handle);
         this->num_easy_handles_ -= 1;
+        if (running_handles == 0 && num_easy_handles_ == 0) ev_unref(EV_DEFAULT_UC);
       }
     }
 
     assert(messages_in_queue == 0);
-
-    if (num_easy_handles_ == 0) ev_unref(EV_DEFAULT);
 
     return status == CURLM_OK;
   }
 
   void CurlMultiWrapper::TimerEventFunction(EV_P_ ev_timer* timer, int events) {
     CurlMultiWrapper* wrapper = static_cast<CurlMultiWrapper*>(timer->data);
-    ev_timer_stop(EV_DEFAULT_ &wrapper->timeout_timer_);
+    ev_timer_stop(EV_A_ &wrapper->timeout_timer_);
     wrapper->ProcessEvents(CURL_SOCKET_TIMEOUT, 0);
   }
 
   int CurlMultiWrapper::TimerFunction(CURLM* /*handle*/, long timeout, void* userp) {
     CurlMultiWrapper* wrapper = static_cast<CurlMultiWrapper*>(userp);
 
-    if (timeout == -1) {
+    if (timeout == 0) {
       wrapper->ProcessEvents(CURL_SOCKET_TIMEOUT, 0);
       return CURLM_OK;
     }
 
-    if (timeout == 0) {
+    if (timeout == -1) {
       timeout = 5000;
     }
 
     wrapper->timeout_timer_.repeat = timeout / 1000.;
-    ev_timer_again(EV_DEFAULT_ &wrapper->timeout_timer_);
+    ev_timer_again(EV_DEFAULT_UC_ &wrapper->timeout_timer_);
 
     return CURLM_OK;
   }
@@ -147,18 +148,18 @@ namespace nodecurl {
 
         watcher.data = wrapper;
         ev_io_init(&watcher, IOEventFunction, sockfd, lib_events);
-        ev_io_start(EV_DEFAULT_ &watcher);
+        ev_io_start(EV_DEFAULT_UC_ &watcher);
       } else {
         assert(0 && "CURL_POLL_NONE or CURL_POLL_REMOVE for bad socket");
       }
     } else {
       ev_io& watcher = it->second;
       if (lib_events) {
-        ev_io_stop(EV_DEFAULT_ &watcher);
+        ev_io_stop(EV_DEFAULT_UC_ &watcher);
         ev_io_set(&watcher, sockfd, lib_events);
-        ev_io_start(EV_DEFAULT_ &watcher);
+        ev_io_start(EV_DEFAULT_UC_ &watcher);
       } else {
-        ev_io_stop(EV_DEFAULT_ &watcher);
+        ev_io_stop(EV_DEFAULT_UC_ &watcher);
         wrapper->socket_fds_.erase(it);
       }
     }
@@ -187,7 +188,7 @@ namespace nodecurl {
 
     wrapper->num_easy_handles_ += 1;
 
-    if (wrapper->num_easy_handles_ == 1) ev_ref(EV_DEFAULT);
+    if (wrapper->num_easy_handles_ == 1) ev_ref(EV_DEFAULT_UC);
 
     return scope.Close(Undefined());
   }
