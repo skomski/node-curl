@@ -5,4 +5,5 @@ node_js:
   - 0.6
 
 after_script:
-  - "node benchmark/simple.js"
+  - "node benchmark/simple.js twitter.com"
+  - "node benchmark/simple.js google.com"
