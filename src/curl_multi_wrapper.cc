@@ -150,7 +150,6 @@ namespace nodecurl {
     SockFDs::iterator it = wrapper->socket_fds_.find(sockfd);
     if (it == wrapper->socket_fds_.end()) {
       if (lib_events) {
-        // create I/O watcher and add it to the list
         ev_io *watcher = &wrapper->socket_fds_.insert(
             SockFDs::value_type(sockfd, ev_io())).first->second;
 

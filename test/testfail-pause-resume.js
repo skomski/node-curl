@@ -17,18 +17,19 @@ request.once('data', function(buffer) {
       request.resume();
       requestResumed = true;
       console.log('resumed')
-    }, 500);
-  }, 500);
+    }, 3000);
+  }, 3000);
 });
 
 request.on('data', function(buffer) {
+  console.log(buffer);
 });
 
 request.on('end', function() {
   requestEnded = true;
 });
 
-request.setOption('url', 'http://tmp.transloadit.com.s3.amazonaws.com/2eb7af87f3885c6b63f97dfd2169083a');
+request.setOption('url', 'http://media.die-drei-vogonen.de/podcast/die_drei_vogonen__folge057__dummtueten_frispo.mp3');
 request.setOption('verbose', true);
 request.execute();
 
