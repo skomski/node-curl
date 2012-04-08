@@ -36,9 +36,8 @@ namespace helpers {
     ThrowError(curl_multi_strerror(code));
   }
 
-  void Emit(Handle<Object> source, const char * event, Handle<Value> object) {
+  void Emit(Handle<Object> source, const char *event, Handle<Value> object) {
     HandleScope scope;
-
     Handle<Value> argv[2] = {
       String::NewSymbol(event),
       object
@@ -63,16 +62,11 @@ namespace helpers {
   }
 
   void MakeCallback(Handle<Object> object,
-                    const char* method,
+                    const char *method,
                     int argc,
                     Handle<Value> argv[]) {
     HandleScope scope;
-
-    Local<Value> callback_v = object->Get(v8::String::New(method));
-    if (!callback_v->IsFunction()) {
-      fprintf(stderr, "method = %s", method);
-    }
-    assert(callback_v->IsFunction());
+    Local<Value> callback_v = object->Get(String::NewSymbol(method));
     Local<Function> callback = Local<Function>::Cast(callback_v);
 
     TryCatch try_catch;

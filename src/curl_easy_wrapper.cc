@@ -32,7 +32,7 @@ namespace nodecurl {
 
     curl_easy_setopt(easy_handle_, CURLOPT_WRITEFUNCTION, WriteFunction);
     curl_easy_setopt(easy_handle_, CURLOPT_WRITEDATA, this);
-    curl_easy_setopt(easy_handle_, CURLOPT_PRIVATE, &this->handle_);
+    curl_easy_setopt(easy_handle_, CURLOPT_PRIVATE, this);
   }
 
   CurlEasyWrapper::~CurlEasyWrapper() {
@@ -108,10 +108,14 @@ namespace nodecurl {
   }
 
   size_t CurlEasyWrapper::OnData(char *data, size_t size) {
-    assert(size > 0);
+    HandleScope scope;
 
     node::Buffer *buffer = node::Buffer::New(data, size);
-    helpers::Emit(this->handle_, "data", buffer->handle_);
+    helpers::Emit(
+        this->handle_,
+        "data",
+        Local<Object>::New(buffer->handle_));
+
     return size;
   }
 

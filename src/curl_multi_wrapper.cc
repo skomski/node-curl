@@ -91,20 +91,24 @@ namespace nodecurl {
     while (
         (message = curl_multi_info_read(multi_handle_, &messages_in_queue))) {
       if (message->msg == CURLMSG_DONE) {
+        curl_multi_remove_handle(multi_handle_, message->easy_handle);
+
         char* handle;
         curl_easy_getinfo(message->easy_handle, CURLINFO_PRIVATE, &handle);
 
-        if (message->data.result != CURLE_OK) {
-          helpers::EmitCurlError(*reinterpret_cast<Handle<Object>*>(handle),
-              message->data.result);
-        }
-        helpers::Emit(*reinterpret_cast<Handle<Object>*>(handle), "end",
-            Undefined());
+        CurlEasyWrapper* wrapper = reinterpret_cast<CurlEasyWrapper*>(handle);
 
-        curl_multi_remove_handle(multi_handle_, message->easy_handle);
+        if (message->data.result != CURLE_OK) {
+          helpers::EmitCurlError(wrapper->handle_, message->data.result);
+        }
+
+        helpers::Emit(wrapper->handle_, "end", Undefined());
+
+        wrapper->UnrefObject();
 
         this->num_easy_handles_ -= 1;
         if (running_handles == 0 && num_easy_handles_ == 0) {
+          this->Unref();
           ev_unref(EV_DEFAULT_UC);
         }
       }
@@ -199,7 +203,12 @@ namespace nodecurl {
 
     wrapper->num_easy_handles_ += 1;
 
-    if (wrapper->num_easy_handles_ == 1) ev_ref(EV_DEFAULT_UC);
+    if (wrapper->num_easy_handles_ == 1) {
+      ev_ref(EV_DEFAULT_UC);
+      wrapper->Ref();
+    }
+
+    easy_wrapper->RefObject();
 
     return scope.Close(Undefined());
   }

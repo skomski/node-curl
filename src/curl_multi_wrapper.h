@@ -22,6 +22,8 @@ namespace nodecurl {
       CurlMultiWrapper();
       ~CurlMultiWrapper();
 
+
+
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
 
       static v8::Handle<v8::Value> Execute(const v8::Arguments& args);
