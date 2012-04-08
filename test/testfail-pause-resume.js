@@ -15,15 +15,13 @@ request.once('data', function(buffer) {
 
     setTimeout(function() {
       request.resume();
-      request.resume();
       requestResumed = true;
       console.log('resumed')
-    }, 3000);
-  }, 3000);
+    }, 500);
+  }, 500);
 });
 
 request.on('data', function(buffer) {
-  console.log('data');
 });
 
 request.on('end', function() {

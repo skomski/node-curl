@@ -12,7 +12,6 @@ request.on('data', function(buffer) {
 });
 
 request.on('end', function() {
-  console.log(jsonData);
   testFinished = true;
 });
 
