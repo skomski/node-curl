@@ -1,6 +1,8 @@
 var curl   = require('..');
 var assert = require('assert');
 
+curl.setOption('pipelining', true);
+
 var request200 = curl.createRequest();
 request200.setOption('url', 'http://jsfiddle.net/echo/jsonp/?status=200');
 request200.setOption('verbose', true);

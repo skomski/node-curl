@@ -3,6 +3,8 @@ var fs        = require('fs')
 var curl      = require('..')
 var http      = require('http')
 
+http.globalAgent.maxSockets = 20;
+
 var processArguments = process.argv.splice(2);
 
 var suite = new Benchmark.Suite();

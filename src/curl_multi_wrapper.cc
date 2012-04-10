@@ -39,6 +39,7 @@ namespace nodecurl {
   }
 
   CurlMultiWrapper::~CurlMultiWrapper() {
+    emit_callback_.Dispose();
     curl_multi_cleanup(multi_handle_);
   }
 
@@ -58,6 +59,10 @@ namespace nodecurl {
     wrapper_template->PrototypeTemplate()->Set(String::NewSymbol("close"),
         FunctionTemplate::New(Close)->GetFunction());
 
+    wrapper_template->PrototypeTemplate()->Set(
+        String::NewSymbol("_setNumberOption"),
+        FunctionTemplate::New(SetNumberOption_)->GetFunction());
+
     Persistent<Function> constructor = Persistent<Function>::New(
         wrapper_template->GetFunction());
     target->Set(String::NewSymbol("CurlMultiWrapper"), constructor);
@@ -68,6 +73,9 @@ namespace nodecurl {
 
     CurlMultiWrapper* wrapper = new CurlMultiWrapper();
     wrapper->Wrap(args.This());
+
+    Local<Value> emitMethod = args.This()->Get(String::NewSymbol("emit"));
+    wrapper->emit_callback_ = Persistent<Function>::New(Handle<Function>::Cast(emitMethod));
 
     return scope.Close(args.This());
   }
@@ -102,7 +110,11 @@ namespace nodecurl {
           helpers::EmitCurlError(wrapper->handle_, message->data.result);
         }
 
-        helpers::Emit(wrapper->handle_, "end", Undefined());
+        Handle<Value> argv[1] = {
+          String::NewSymbol("end")
+        };
+
+        helpers::ProcessCallback(wrapper->handle_, wrapper->emit_callback_, 1, argv);
 
         wrapper->UnrefObject();
 
@@ -209,6 +221,32 @@ namespace nodecurl {
     }
 
     easy_wrapper->RefObject();
+
+    return scope.Close(Undefined());
+  }
+
+  Handle<Value> CurlMultiWrapper::SetNumberOption_(const Arguments& args) {
+    HandleScope scope;
+    CurlMultiWrapper* wrapper = Unwrap<CurlMultiWrapper>(args.This());
+
+    if (args.Length() < 2) {
+      helpers::ThrowError("Need 2 arguments");
+      return scope.Close(Undefined());
+    }
+
+    if (!args[0]->IsNumber() || !args[1]->IsNumber()) {
+      helpers::ThrowError("Need number[0] and number[1]");
+      return scope.Close(Undefined());
+    }
+
+    const CURLMoption option = (CURLMoption) args[0]->Int32Value();
+
+    const CURLMcode status = curl_multi_setopt(
+        wrapper->multi_handle_, option, args[1]->Int32Value());
+
+    if (status != CURLM_OK) {
+      helpers::ThrowCurlMultiError(status);
+    }
 
     return scope.Close(Undefined());
   }

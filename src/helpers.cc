@@ -43,7 +43,7 @@ namespace helpers {
       object
     };
 
-    MakeCallback(source, "emit", 2, argv);
+    ProcessCallback(source, "emit", 2, argv);
   }
 
   void EmitError(Handle<Object> source, const char* error_message) {
@@ -61,13 +61,32 @@ namespace helpers {
     EmitError(source, curl_multi_strerror(code));
   }
 
-  void MakeCallback(Handle<Object> object,
-                    const char *method,
-                    int argc,
-                    Handle<Value> argv[]) {
+
+  void ProcessCallback(
+      const Handle<Object>& object,
+      const char* method,
+      int argc,
+      Handle<Value> argv[]) {
     HandleScope scope;
-    Local<Value> callback_v = object->Get(String::NewSymbol(method));
+
+    Local<Value> callback_v = object->Get(v8::String::NewSymbol(method));
     Local<Function> callback = Local<Function>::Cast(callback_v);
+
+    TryCatch try_catch;
+
+    callback->Call(object, argc, argv);
+
+    if (try_catch.HasCaught()) {
+      node::FatalException(try_catch);
+    }
+  }
+
+  void ProcessCallback(
+      const Handle<Object>& object,
+      const Handle<Function>& callback,
+      int argc,
+      Handle<Value> argv[]) {
+    HandleScope scope;
 
     TryCatch try_catch;
 

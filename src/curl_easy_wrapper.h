@@ -17,6 +17,9 @@ namespace nodecurl {
       CURL*  getHandle() const { return easy_handle_; }
       inline void RefObject() { this->Ref(); }
       inline void UnrefObject() { this->Unref(); }
+
+      v8::Persistent<v8::Function> emit_callback_;
+
     private:
       CurlEasyWrapper();
       ~CurlEasyWrapper();

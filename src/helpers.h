@@ -28,9 +28,15 @@ namespace helpers {
       v8::Handle<v8::Object> source,
       CURLMcode code);
 
-  void MakeCallback(
-      v8::Handle<v8::Object> object,
+  void ProcessCallback(
+      const v8::Handle<v8::Object>& object,
       const char* method,
+      int argc,
+      v8::Handle<v8::Value> argv[]);
+
+  void ProcessCallback(
+      const v8::Handle<v8::Object>& object,
+      const v8::Handle<v8::Function>& callback,
       int argc,
       v8::Handle<v8::Value> argv[]);
 }

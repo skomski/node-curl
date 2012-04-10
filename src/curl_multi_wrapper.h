@@ -22,9 +22,8 @@ namespace nodecurl {
       CurlMultiWrapper();
       ~CurlMultiWrapper();
 
-
-
       static v8::Handle<v8::Value> New(const v8::Arguments& args);
+      static v8::Handle<v8::Value> SetNumberOption_(const v8::Arguments& args);
 
       static v8::Handle<v8::Value> Execute(const v8::Arguments& args);
       static v8::Handle<v8::Value> Close(const v8::Arguments& args);
@@ -41,6 +40,7 @@ namespace nodecurl {
       unsigned int num_easy_handles_;
       SockFDs socket_fds_;
       ev_timer timeout_timer_;
+      v8::Persistent<v8::Function> emit_callback_;
   };
 }
 

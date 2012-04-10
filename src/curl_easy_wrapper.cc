@@ -37,6 +37,7 @@ namespace nodecurl {
 
   CurlEasyWrapper::~CurlEasyWrapper() {
     curl_easy_cleanup(easy_handle_);
+    emit_callback_.Dispose();
     if (form_ != NULL) curl_formfree(form_);
     std::vector<curl_slist*>::const_iterator i;
     for (i = option_lists_.begin(); i != option_lists_.end(); ++i) {
@@ -98,6 +99,9 @@ namespace nodecurl {
     CurlEasyWrapper* wrapper = new CurlEasyWrapper();
     wrapper->Wrap(args.This());
 
+    Local<Value> emitMethod = args.This()->Get(String::NewSymbol("emit"));
+    wrapper->emit_callback_ = Persistent<Function>::New(Handle<Function>::Cast(emitMethod));
+
     return scope.Close(args.This());
   }
 
@@ -111,10 +115,11 @@ namespace nodecurl {
     HandleScope scope;
 
     node::Buffer *buffer = node::Buffer::New(data, size);
-    helpers::Emit(
-        this->handle_,
-        "data",
-        Local<Object>::New(buffer->handle_));
+    Handle<Value> argv[2] = {
+      String::NewSymbol("data"),
+      buffer->handle_
+    };
+    helpers::ProcessCallback(handle_, emit_callback_, 2, argv);
 
     return size;
   }
