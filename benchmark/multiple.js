@@ -4,7 +4,7 @@ var collection = new measured.Collection('benchmark');
 
 var http      = require('http')
 
-if (http.globalAgent) http.globalAgent.maxSockets = 10;
+if (http.globalAgent) http.globalAgent.maxSockets = 40;
 
 var processArguments = process.argv.splice(2);
 
@@ -56,10 +56,10 @@ var httpFunction = function() {
 }
 
 if (processArguments[1] === 'curl') {
-  setInterval(curlFunction, 30);
+  setInterval(curlFunction, 10);
 }
 if (processArguments[1] === 'http') {
-  setInterval(httpFunction, 30);
+  setInterval(httpFunction, 10);
 }
 
 setInterval(function() {
@@ -77,4 +77,4 @@ setTimeout(function() {
     ' queued=' + queuedRequests +
     ' mean=' + rps.meanRate());
   process.exit(0)
-}, 30 * 1000);
+}, 120 * 1000);
