@@ -4,7 +4,7 @@ var collection = new measured.Collection('benchmark');
 
 var http      = require('http')
 
-http.Agent.maxSockets = 20;
+if (http.globalAgent) http.globalAgent.maxSockets = 10;
 
 var processArguments = process.argv.splice(2);
 
