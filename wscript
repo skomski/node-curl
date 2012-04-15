@@ -14,7 +14,7 @@ def build(bld):
     '-Wall',
     '-D_FILE_OFFSET_BITS=64',
     '-D_LARGEFILE_SOURCE',
-    '-std=c++11',
+    '-std=c++0x',
     '-O3',
     '-DNDEBUG'
   ]
