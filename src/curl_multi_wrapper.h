@@ -3,7 +3,7 @@
 #ifndef SRC_CURL_MULTI_WRAPPER_H_
 #define SRC_CURL_MULTI_WRAPPER_H_
 
-#include <map>
+#include <unordered_map>
 
 #include "curl/curl.h"
 #include "node.h"
@@ -17,7 +17,7 @@ namespace nodecurl {
       static void Initialize(v8::Handle<v8::Object> target);
 
     private:
-      typedef std::map<curl_socket_t, ev_io> SockFDs;
+      typedef std::unordered_map<curl_socket_t, ev_io> SockFDs;
 
       CurlMultiWrapper();
       ~CurlMultiWrapper();
