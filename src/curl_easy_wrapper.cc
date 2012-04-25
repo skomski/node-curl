@@ -341,6 +341,7 @@ namespace nodecurl {
 
   Handle<Value> CurlEasyWrapper::Close(const Arguments& args) {
     HandleScope scope;
+
     return scope.Close(Undefined());
   }
 }
